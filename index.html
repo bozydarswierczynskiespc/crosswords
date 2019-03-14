@@ -12,7 +12,7 @@
 
     <title>Crosswords!</title>
 </head>
-<body>
+<body style="margin: 30px;">
 
 <h1>Crosswords!</h1>
 
@@ -32,11 +32,13 @@
 
     let addedWords = [];
     let numberOfAddedWords = 0;
-    let deletedWords = [];
 
     let words = [];
     let numberOfWords = 0;
     let size = 0;
+
+    let resultMatrix = [];
+    let wordsOnMatrix = [];
 
     let directions = [
         {y: 0, x: 1},
@@ -51,7 +53,6 @@
     let numberOfDirections = 8;
 
 
-
     $('#add_word_button').click(function () {
         let wordInput = $("#word_input");
         let word = wordInput.val();
@@ -62,17 +63,17 @@
             return false;
         }
         addedWords[numberOfAddedWords] = word;
-        $('#word_list').append('<p id="word_' + numberOfAddedWords + '">' + word + '<button onclick="deleteWord(' + numberOfAddedWords + ')">Delete</button></p>');
+        $('#word_list').append('<p id="word_' + numberOfAddedWords + '">' + word + '&nbsp;&nbsp;' +
+            '<button onclick="deleteWord(' + numberOfAddedWords + ')">Delete</button>' +
+            '<button onclick="showWord(' + numberOfAddedWords + ')">Show</button></p>');
         wordInput.val('');
         numberOfAddedWords++;
     });
 
     function deleteWord(wordIndex) {
-        deletedWords.push(wordIndex);
+        addedWords[wordIndex] = null;
         $("#word_" + wordIndex).hide();
     }
-
-
 
 
     $("#draw_crosswords_button").click(function () {
@@ -84,19 +85,20 @@
         }
 
         let matrix = addWordToMatrix(0, {x: 0, y: 0}, 0, prepareMatrix());
-
         if (matrix) {
-            drawWordsOnMatrix(matrix);
+            resultMatrix = matrix;
+            drawWordsOnMatrix();
         } else {
-            alert('Dupa blada!!!');
+            alert('Could not find solution!!!');
         }
     });
 
     function prepareWords() {
         numberOfWords = 0;
         words = [];
+        wordsOnMatrix=[];
         for (let i = 0; i < numberOfAddedWords; i++) {
-            if (!deletedWords.includes(i)) {
+            if (addedWords[i]) {
                 words[numberOfWords] = addedWords[i];
                 numberOfWords++;
             }
@@ -129,18 +131,12 @@
     }
 
 
-
-
-
-
-
-
-
-
     function addWordToMatrix(wordIndex, position, directionIndex, matrix) {
         let newMatrix = checkAndAddWordToMatrix(words[wordIndex], position, directions[directionIndex], matrix);
 
         if (newMatrix) {
+            wordsOnMatrix[wordIndex] = {position: position, direction: directions[directionIndex]};
+
             let nextWordIndex = wordIndex + 1;
             if (nextWordIndex >= numberOfWords) {
                 return newMatrix;
@@ -212,14 +208,13 @@
     }
 
 
-
-
-    function drawWordsOnMatrix(matrix) {
+    function drawWordsOnMatrix() {
         let crosswordsTableContent = '<table class="table table-dark table-bordered" style="width: ' + (size * 10) + 'px">';
         for (var y = 0; y < size; y++) {
             crosswordsTableContent += '<tr>';
             for (var x = 0; x < size; x++) {
-                crosswordsTableContent += '<td style="width: 10px; height: 10px;">' + matrix[y][x] + '</td>';
+                let value = resultMatrix[y][x] ? resultMatrix[y][x] : '*';
+                crosswordsTableContent += '<td style="width: 10px; height: 10px;" id="crosswords_field_' + y + x + '">' + value + '</td>';
             }
             crosswordsTableContent += '</tr>';
         }
@@ -227,6 +222,24 @@
 
         $('#crosswords_table').html(crosswordsTableContent);
     }
+
+    function showWord(wordIndex) {
+        drawWordsOnMatrix();
+
+        let wordLength = words[wordIndex] ? words[wordIndex].length : null;
+        let position = wordsOnMatrix[wordIndex] ? wordsOnMatrix[wordIndex].position : null;
+        let direction = wordsOnMatrix[wordIndex] ? wordsOnMatrix[wordIndex].direction : null;
+        if (wordLength && position && direction) {
+            let x = position.x;
+            let y = position.y;
+            for(let i = 0; i < wordLength; i++) {
+                $('#crosswords_field_' + y + x).css({'color':'#FFFF00', 'background-color':'#555555'});
+                x += direction.x;
+                y += direction.y;
+            }
+        }
+    }
+
 </script>
 </body>
 </html>
