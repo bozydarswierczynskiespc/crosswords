@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>Crosswords!</title>
+</head>
+<body>
+
+<h1>Crosswords!</h1>
+
+<div id="word_list"></div>
+<label>Add word: <input type="text" name="width" id="word_input"></label>
+<button type="button" class="btn btn-dark" id="add_word_button">Add word</button>
+
+<label>Size: <input type="text" name="width" id="size_input" value="5"/></label>
+<button type="button" class="btn btn-dark" id="draw_crosswords_button">Draw crosswords</button>
+<hr>
+
+<div id="crosswords_table"></div>
+
+<script src="jquery-3.3.1.min.js"></script>
+
+<script>
+
+    let addedWords = [];
+    let numberOfAddedWords = 0;
+    let deletedWords = [];
+
+    let words = [];
+    let numberOfWords = 0;
+    let size = 0;
+
+    let directions = [
+        {y: 0, x: 1},
+        {y: 0, x: -1},
+        {y: 1, x: 0},
+        {y: -1, x: 0},
+        {y: 1, x: 1},
+        {y: -1, x: -1},
+        {y: -1, x: 1},
+        {y: 1, x: -1},
+    ];
+    let numberOfDirections = 8;
+
+
+
+    $('#add_word_button').click(function () {
+        let wordInput = $("#word_input");
+        let word = wordInput.val();
+        if (!word) {
+            return false;
+        }
+        if (typeof word != 'string') {
+            return false;
+        }
+        addedWords[numberOfAddedWords] = word;
+        $('#word_list').append('<p id="word_' + numberOfAddedWords + '">' + word + '<button onclick="deleteWord(' + numberOfAddedWords + ')">Delete</button></p>');
+        wordInput.val('');
+        numberOfAddedWords++;
+    });
+
+    function deleteWord(wordIndex) {
+        deletedWords.push(wordIndex);
+        $("#word_" + wordIndex).hide();
+    }
+
+
+
+
+    $("#draw_crosswords_button").click(function () {
+        size = $("#size_input").val();
+        prepareWords();
+
+        if (!checkWordsWillFit()) {
+            return false;
+        }
+
+        let matrix = addWordToMatrix(0, {x: 0, y: 0}, 0, prepareMatrix());
+
+        if (matrix) {
+            drawWordsOnMatrix(matrix);
+        } else {
+            alert('Dupa blada!!!');
+        }
+    });
+
+    function prepareWords() {
+        numberOfWords = 0;
+        words = [];
+        for (let i = 0; i < numberOfAddedWords; i++) {
+            if (!deletedWords.includes(i)) {
+                words[numberOfWords] = addedWords[i];
+                numberOfWords++;
+            }
+        }
+    }
+
+    function checkWordsWillFit() {
+        for (let i = 0; i < numberOfWords; i++) {
+            let word = words[i];
+            if (word.length > size) {
+                alert('Word ' + word + ' is too long');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function prepareMatrix() {
+        let matrix = [];
+        for (let y = 0; y < size; y++) {
+            let row = [];
+            for (let x = 0; x < size; x++) {
+                row[x] = null;
+            }
+            matrix[y] = row;
+        }
+
+        return matrix;
+    }
+
+
+
+
+
+
+
+
+
+
+    function addWordToMatrix(wordIndex, position, directionIndex, matrix) {
+        let newMatrix = checkAndAddWordToMatrix(words[wordIndex], position, directions[directionIndex], matrix);
+
+        if (newMatrix) {
+            let nextWordIndex = wordIndex + 1;
+            if (nextWordIndex >= numberOfWords) {
+                return newMatrix;
+            }
+
+            let resultMatrix = addWordToMatrix(nextWordIndex, {x: 0, y: 0}, 0, newMatrix);
+            if (resultMatrix) {
+                return resultMatrix;
+            }
+        }
+
+        let nextDirectionIndex = directionIndex + 1;
+        let nextPosition = position;
+        if (nextDirectionIndex >= numberOfDirections) {
+            nextDirectionIndex = 0;
+            nextPosition = getNextPosition(position);
+            if (!nextPosition) {
+                return false;
+            }
+        }
+        return addWordToMatrix(wordIndex, nextPosition, nextDirectionIndex, matrix);
+    }
+
+    function checkAndAddWordToMatrix(word, position, direction, matrix) {
+        let newMatrix = copyMatrix(matrix);
+        let x = position.x;
+        let y = position.y;
+        for (let letterIndex in word) {
+            if (x < 0 || x >= size || y < 0 || y >= size) {
+                return false;
+            }
+            let matrixValue = newMatrix[y][x];
+            if (!!matrixValue && matrixValue !== word[letterIndex]) {
+                return false;
+            }
+            newMatrix[y][x] = word[letterIndex];
+            x += direction.x;
+            y += direction.y;
+        }
+
+        return newMatrix;
+    }
+
+    function copyMatrix(oldMatrix) {
+        let newMatrix = [];
+        for (let y = 0; y < size; y++) {
+            let newRow = [];
+            for (var x = 0; x < size; x++) {
+                newRow[x] = oldMatrix[y][x];
+            }
+            newMatrix[y] = newRow;
+        }
+
+        return newMatrix;
+    }
+
+    function getNextPosition(position) {
+        let x = position.x;
+        let y = position.y;
+        x++;
+        if (x >= size) {
+            x = 0;
+            y++;
+        }
+        if (y >= size) {
+            return null;
+        }
+        return {x: x, y: y};
+    }
+
+
+
+
+    function drawWordsOnMatrix(matrix) {
+        let crosswordsTableContent = '<table class="table table-dark table-bordered" style="width: ' + (size * 10) + 'px">';
+        for (var y = 0; y < size; y++) {
+            crosswordsTableContent += '<tr>';
+            for (var x = 0; x < size; x++) {
+                crosswordsTableContent += '<td style="width: 10px; height: 10px;">' + matrix[y][x] + '</td>';
+            }
+            crosswordsTableContent += '</tr>';
+        }
+        crosswordsTableContent += '</table>';
+
+        $('#crosswords_table').html(crosswordsTableContent);
+    }
+</script>
+</body>
+</html>
