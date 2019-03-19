@@ -132,9 +132,9 @@
                 return newMatrix;
             }
 
-            let resultMatrix = addWordToMatrix(nextWordIndex, {x: 0, y: 0}, 0, newMatrix);
-            if (resultMatrix) {
-                return resultMatrix;
+            newMatrix = addWordToMatrix(nextWordIndex, {x: 0, y: 0}, 0, newMatrix);
+            if (newMatrix) {
+                return newMatrix;
             }
         }
 
