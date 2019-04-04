@@ -13,6 +13,7 @@
     <title>Crosswords!</title>
 </head>
 <body style="margin: 30px;">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
 <h1>Crosswords!</h1>
 
@@ -26,12 +27,10 @@
 
 <div id="crosswords_table"></div>
 
-<script src="jquery-3.3.1.min.js"></script>
-
 <script>
 
-    let addedWords = [];
-    let numberOfAddedWords = 0;
+    let words = [];
+    let numberOfWords = 0;
 
     let size = 0;
 
@@ -60,16 +59,17 @@
         if (typeof word != 'string') {
             return false;
         }
-        addedWords[numberOfAddedWords] = word;
-        $('#word_list').append('<p id="word_' + numberOfAddedWords + '">' + word + '&nbsp;&nbsp;' +
-            '<button onclick="deleteWord(' + numberOfAddedWords + ')">Delete</button>' +
-            '<button onclick="showWord(' + numberOfAddedWords + ')">Show</button></p>');
+        word = word.toUpperCase();
+        words[numberOfWords] = word;
+        $('#word_list').append('<p id="word_' + numberOfWords + '">' + word + '&nbsp;&nbsp;' +
+            '<button onclick="deleteWord(' + numberOfWords + ')">Delete</button>' +
+            '<button onclick="showWord(' + numberOfWords + ')">Show</button></p>');
         wordInput.val('');
-        numberOfAddedWords++;
+        numberOfWords++;
     });
 
     function deleteWord(wordIndex) {
-        addedWords[wordIndex] = null;
+        words[wordIndex] = null;
         $("#word_" + wordIndex).hide();
     }
 
@@ -92,8 +92,8 @@
 
 
     function checkWordsWillFit() {
-        for (let i = 0; i < numberOfAddedWords; i++) {
-            let word = addedWords[i];
+        for (let i = 0; i < numberOfWords; i++) {
+            let word = words[i];
             if (word !== null && word.length > size) {
                 alert('Word ' + word + ' is too long');
                 return false;
@@ -118,17 +118,17 @@
 
 
     function addWordToMatrix(wordIndex, position, directionIndex, matrix) {
-        if(addedWords[wordIndex] === null) {
+        if(words[wordIndex] === null) {
             return addWordToMatrix(wordIndex + 1, position, directionIndex, matrix)
         }
 
-        let newMatrix = checkAndAddWordToMatrix(addedWords[wordIndex], position, directions[directionIndex], matrix);
+        let newMatrix = checkAndAddWordToMatrix(words[wordIndex], position, directions[directionIndex], matrix);
 
         if (newMatrix) {
             wordsOnMatrix[wordIndex] = {position: position, direction: directions[directionIndex]};
 
             let nextWordIndex = wordIndex + 1;
-            if (nextWordIndex >= numberOfAddedWords) {
+            if (nextWordIndex >= numberOfWords) {
                 return newMatrix;
             }
 
@@ -216,7 +216,7 @@
     function showWord(wordIndex) {
         drawWordsOnMatrix();
 
-        let wordLength = addedWords[wordIndex] ? addedWords[wordIndex].length : null;
+        let wordLength = words[wordIndex] ? words[wordIndex].length : null;
         let position = wordsOnMatrix[wordIndex] ? wordsOnMatrix[wordIndex].position : null;
         let direction = wordsOnMatrix[wordIndex] ? wordsOnMatrix[wordIndex].direction : null;
         if (wordLength && position && direction) {
